@@ -288,7 +288,7 @@ export function PlanetCanvas() {
     <Canvas
       className="planet-canvas"
       dpr={[1, 2]}
-      shadows
+      shadows="basic"
       fallback={
         <div className="webgl-fallback" role="alert">
           <strong>3D preview unavailable</strong>
