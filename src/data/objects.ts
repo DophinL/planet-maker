@@ -26,8 +26,14 @@ const asset = (
 });
 
 export const OBJECTS: ObjectAsset[] = [
-  asset("house", "House", "Places", 0.34, 0, "Kenney", "https://kenney.nl/assets/city-kit-suburban", "png"),
-  asset("tent", "Tent", "Places", 0.22, 0, "Kenney", "https://kenney.nl/assets/survival-kit", "png"),
+  {
+    ...asset("house", "House", "Places", 0.34, 0, "Kenney", "https://kenney.nl/assets/city-kit-suburban", "png"),
+    model: "/assets/models/kenney-suburban/house.glb"
+  },
+  {
+    ...asset("tent", "Tent", "Places", 0.22, 0, "Kenney", "https://kenney.nl/assets/survival-kit", "png"),
+    model: "/assets/models/kenney-survival/tent.glb"
+  },
   asset("pine", "Pine", "Nature", 0.3, 0, "Kenney", "https://kenney.nl/assets/nature-kit", "png"),
   asset("canoe", "Canoe", "Travel", 0.3, 0.01, "Kenney", "https://kenney.nl/assets/nature-kit", "png"),
   asset("tree", "Canopy tree", "Nature", 0.38, 0, "Quaternius", "https://poly.pizza/m/qZtx0AHhcy", "jpg"),
