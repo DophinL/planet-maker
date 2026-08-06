@@ -1477,7 +1477,7 @@ input[type="range"]::-webkit-slider-thumb {
   .preview-caption strong { font-size: 2.2rem; }
   .picker-content { height: auto; min-height: 67vh; padding: 38px 22px 84px; overflow: visible; }
   .picker-title h1 { font-size: 2.25rem; }
-  .picker-footer { position: fixed; left: 22px; right: 22px; }
+  .picker-footer { display: none; }
   .picker-brand a { display: none; }
 
   .tool-panel {
@@ -1539,9 +1539,6 @@ input[type="range"]::-webkit-slider-thumb {
   .planet-card { min-height: 82px; }
   .custom-card { grid-column: auto; }
   .picker-title h1 { font-size: 2rem; }
-  .picker-footer span:first-child { display: none; }
-  .picker-footer { justify-content: flex-end; }
-
   .editor-topbar { right: 10px; left: 10px; }
   .editor-brand { width: 44px; padding: 5px; overflow: hidden; }
   .editor-brand strong, .editor-brand > svg { display: none; }
