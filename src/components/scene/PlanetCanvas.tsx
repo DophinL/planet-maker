@@ -289,6 +289,12 @@ export function PlanetCanvas() {
       className="planet-canvas"
       dpr={[1, 2]}
       shadows
+      fallback={
+        <div className="webgl-fallback" role="alert">
+          <strong>3D preview unavailable</strong>
+          <span>Enable hardware acceleration or open Planet Maker in a WebGL 2 compatible browser.</span>
+        </div>
+      }
       gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: "high-performance" }}
       camera={{ position: [0, 0.35, 8.15], fov: 43, near: 0.1, far: 100 }}
       onCreated={({ gl }) => {

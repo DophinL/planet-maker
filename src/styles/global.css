@@ -416,6 +416,29 @@ img {
   inset: 0;
 }
 
+.webgl-fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 7px;
+  padding: 32px;
+  color: var(--ink);
+  text-align: center;
+  background: var(--base-deep);
+}
+
+.webgl-fallback strong {
+  font-size: 1.2rem;
+}
+
+.webgl-fallback span {
+  max-width: 44ch;
+  color: var(--ink-soft);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
 .editor-shell.is-placing .scene-wrap canvas {
   cursor: crosshair !important;
 }
