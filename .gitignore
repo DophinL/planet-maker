@@ -5,6 +5,7 @@ dist
 coverage
 playwright-report
 test-results
+.gstack
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
