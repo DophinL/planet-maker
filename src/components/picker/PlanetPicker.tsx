@@ -55,7 +55,7 @@ export function PlanetPicker({
           <p>Everything stays in your browser.</p>
         </div>
 
-        <div className="planet-grid" role="list" aria-label="Planet presets">
+        <div className="planet-grid" aria-label="Planet presets">
           {PLANETS.map((planet, index) => (
             <button
               key={planet.id}
@@ -65,7 +65,6 @@ export function PlanetPicker({
               onMouseEnter={() => setHovered(planet.id)}
               onFocus={() => setHovered(planet.id)}
               onClick={() => onChoose(planet.id)}
-              role="listitem"
             >
               <span className="planet-index">{String(index + 1).padStart(2, "0")}</span>
               <img src={planet.preview} alt="" />
@@ -82,7 +81,6 @@ export function PlanetPicker({
             className="planet-card custom-card"
             onClick={() => inputRef.current?.click()}
             disabled={busy}
-            role="listitem"
           >
             <span className="custom-icon"><ImagePlus size={23} /></span>
             <span className="planet-meta">
