@@ -42,6 +42,24 @@ body {
   background: var(--base);
 }
 
+.editor-loading {
+  align-items: center;
+  background: #020706;
+  color: var(--ink);
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+  min-height: 100dvh;
+}
+
+.editor-loading .planet-mark {
+  animation: loading-orbit 1.2s linear infinite;
+}
+
+@keyframes loading-orbit {
+  to { transform: rotate(360deg); }
+}
+
 button,
 input {
   font: inherit;
