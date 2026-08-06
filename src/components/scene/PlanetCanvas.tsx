@@ -287,7 +287,7 @@ export function PlanetCanvas() {
       dpr={[1, 2]}
       shadows
       gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true, powerPreference: "high-performance" }}
-      camera={{ position: [0, 0.35, 7.1], fov: 43, near: 0.1, far: 100 }}
+      camera={{ position: [0, 0.35, 8.15], fov: 43, near: 0.1, far: 100 }}
       onCreated={({ gl }) => {
         gl.outputColorSpace = THREE.SRGBColorSpace;
         gl.toneMapping = THREE.ACESFilmicToneMapping;
@@ -303,8 +303,8 @@ export function PlanetCanvas() {
       <OrbitControls
         makeDefault
         enablePan={false}
-        minDistance={4.4}
-        maxDistance={11}
+        minDistance={5.3}
+        maxDistance={12}
         minPolarAngle={0.2}
         maxPolarAngle={Math.PI - 0.2}
         rotateSpeed={0.55}
