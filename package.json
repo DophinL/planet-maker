@@ -4,6 +4,14 @@
   "private": true,
   "type": "module",
   "description": "A local-first 3D planet editor built with Three.js and React Three Fiber.",
+  "homepage": "https://make3dmap.com/3d-planet-maker",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DophinL/planet-maker.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DophinL/planet-maker/issues"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

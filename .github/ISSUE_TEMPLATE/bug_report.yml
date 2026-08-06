@@ -1,0 +1,36 @@
+name: Bug report
+description: Report reproducible broken behavior
+title: "[Bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: Please do not attach private models or textures to a public issue.
+  - type: textarea
+    id: summary
+    attributes:
+      label: What happened?
+      description: Include the result you expected and the result you saw.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Reproduction steps
+      placeholder: "1. Choose Earth\n2. Open Objects\n3. …"
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser and version
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Commit or deployed URL
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots or console output
