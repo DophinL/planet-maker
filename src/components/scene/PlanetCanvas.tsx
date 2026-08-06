@@ -219,9 +219,12 @@ function PlanetSystem() {
           <mesh scale={[1.009, planet.polarScale * 1.009, 1.009]}>
             <sphereGeometry args={[PLANET_RADIUS, 128, 96]} />
             <meshStandardMaterial
-              map={cloudMap}
+              map={planetId === "venus" ? cloudMap : undefined}
+              alphaMap={planetId === "venus" ? undefined : cloudMap}
+              color="#f5f3ec"
               transparent
               opacity={surface.cloudOpacity}
+              alphaTest={planetId === "venus" ? 0 : 0.025}
               depthWrite={false}
               blending={THREE.NormalBlending}
               roughness={0.9}
