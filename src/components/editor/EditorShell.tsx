@@ -6,9 +6,6 @@ import { PlanetCanvas } from "../scene/PlanetCanvas";
 import { ToolPanel } from "./ToolPanel";
 import { ToolRail } from "./ToolRail";
 
-const TRIPO_FLOATING_URL =
-  "https://studio.tripo3d.ai/?utm_source=github&utm_medium=planet_maker&utm_campaign=open_source&utm_content=floating_cta";
-
 export function EditorShell({ onChooseWorld }: { onChooseWorld: () => void }) {
   const planetId = useEditorStore((state) => state.planetId);
   const surface = useEditorStore((state) => state.surface);
@@ -93,12 +90,6 @@ export function EditorShell({ onChooseWorld }: { onChooseWorld: () => void }) {
       ) : (
         <div className="canvas-hint">Drag to orbit <i /> Scroll to zoom <i /> Space to pause</div>
       )}
-
-      <a className="tripo-floating" href={TRIPO_FLOATING_URL} target="_blank" rel="noreferrer">
-        <span><img src="/assets/brand/tripo-logo.svg" alt="" /></span>
-        <span><strong>Create any 3D model</strong><small>Made for this world · Powered by Tripo</small></span>
-        <ExternalLink size={15} />
-      </a>
     </main>
   );
 }
