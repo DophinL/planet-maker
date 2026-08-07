@@ -7,7 +7,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["assets/**/*"],
+      includeAssets: ["icon.svg", "assets/brand/tripo-logo.svg"],
       manifest: {
         name: "Planet Maker — Offline 3D World Editor",
         short_name: "Planet Maker",
@@ -26,9 +26,34 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ["**/*.{js,css,html,svg,png,jpg,jpeg,webp,glb,woff2}"],
+        globPatterns: [
+          "**/*.{js,css,html,svg,woff2}",
+          "assets/planets/previews/*.webp",
+          "assets/planets/earth.jpg",
+          "assets/planets/earth-clouds.jpg"
+        ],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
-        navigateFallback: "/index.html"
+        navigateFallback: "/index.html",
+        runtimeCaching: [
+          {
+            urlPattern: /\/assets\/planets\/.*\.(?:jpg|jpeg|png|webp)$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "planet-maker-textures-v1",
+              expiration: { maxEntries: 32, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          },
+          {
+            urlPattern: /\/assets\/models\/.*\.(?:glb|jpg|jpeg|png)$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "planet-maker-models-v1",
+              expiration: { maxEntries: 64, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              cacheableResponse: { statuses: [0, 200] }
+            }
+          }
+        ]
       }
     })
   ],

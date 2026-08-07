@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { ChevronDown, ExternalLink, Globe2, LocateFixed, Pause, Play, Trash2 } from "lucide-react";
 import { PLANET_BY_ID } from "../../data/planets";
-import { useEditorStore } from "../../store/editor-store";
+import { getStorageStatus, useEditorStore } from "../../store/editor-store";
 import { PlanetCanvas } from "../scene/PlanetCanvas";
 import { ToolPanel } from "./ToolPanel";
 import { ToolRail } from "./ToolRail";
@@ -11,11 +11,13 @@ export function EditorShell({ onChooseWorld }: { onChooseWorld: () => void }) {
   const surface = useEditorStore((state) => state.surface);
   const placement = useEditorStore((state) => state.placement);
   const selectedId = useEditorStore((state) => state.selectedId);
+  const activeTool = useEditorStore((state) => state.activeTool);
   const setPlacement = useEditorStore((state) => state.setPlacement);
   const removeSelected = useEditorStore((state) => state.removeSelected);
   const updateSurface = useEditorStore((state) => state.updateSurface);
   const setPanelOpen = useEditorStore((state) => state.setPanelOpen);
   const [online, setOnline] = useState(navigator.onLine);
+  const [storageOk, setStorageOk] = useState(getStorageStatus);
   const name = planetId === "custom" ? surface.textureName : PLANET_BY_ID[planetId].name;
 
   useEffect(() => {
@@ -29,10 +31,26 @@ export function EditorShell({ onChooseWorld }: { onChooseWorld: () => void }) {
   }, []);
 
   useEffect(() => {
+    const handleStorage = (event: Event) => {
+      setStorageOk((event as CustomEvent<string>).detail !== "error");
+    };
+    window.addEventListener("planet-maker-storage", handleStorage);
+    return () => window.removeEventListener("planet-maker-storage", handleStorage);
+  }, []);
+
+  useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement;
       if (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return;
-      if (event.key === "Escape") setPlacement(null);
+      if (event.key === "Escape") {
+        if (placement) setPlacement(null);
+        else {
+          setPanelOpen(false);
+          requestAnimationFrame(() => {
+            document.querySelector<HTMLButtonElement>(`[data-tool="${activeTool}"]`)?.focus();
+          });
+        }
+      }
       if ((event.key === "Delete" || event.key === "Backspace") && selectedId) removeSelected();
       if (event.code === "Space") {
         event.preventDefault();
@@ -41,7 +59,7 @@ export function EditorShell({ onChooseWorld }: { onChooseWorld: () => void }) {
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [removeSelected, selectedId, setPlacement, surface.autoRotate, updateSurface]);
+  }, [activeTool, placement, removeSelected, selectedId, setPanelOpen, setPlacement, surface.autoRotate, updateSurface]);
 
   return (
     <main className={`editor-shell ${placement ? "is-placing" : ""}`}>
@@ -61,8 +79,8 @@ export function EditorShell({ onChooseWorld }: { onChooseWorld: () => void }) {
           <ChevronDown size={15} />
         </button>
         <div className="topbar-actions">
-          <span className={`local-status ${online ? "" : "offline"}`}>
-            <i /> {online ? "Saved locally" : "Offline mode"}
+          <span className={`local-status ${online && storageOk ? "" : "offline"}`} role="status">
+            <i /> {!storageOk ? "Storage full" : online ? "Saved locally" : "Offline mode"}
           </span>
           {selectedId ? (
             <button type="button" onClick={removeSelected} aria-label="Remove selected item"><Trash2 size={17} /><span>Delete</span></button>
@@ -71,7 +89,7 @@ export function EditorShell({ onChooseWorld }: { onChooseWorld: () => void }) {
             {surface.autoRotate ? <Pause size={17} /> : <Play size={17} />}
             <span>{surface.autoRotate ? "Pause" : "Rotate"}</span>
           </button>
-          <button className="mobile-controls" type="button" onClick={() => setPanelOpen(true)}><LocateFixed size={17} /><span>Controls</span></button>
+          <button className="mobile-controls" type="button" onClick={() => setPanelOpen(true)} aria-label="Open editor controls"><LocateFixed size={17} /><span>Controls</span></button>
         </div>
       </header>
 

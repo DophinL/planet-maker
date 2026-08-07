@@ -21,9 +21,20 @@ export function ToolPanel() {
   const panelOpen = useEditorStore((state) => state.panelOpen);
   const setPanelOpen = useEditorStore((state) => state.setPanelOpen);
   const Panel = PANELS[activeTool];
+  const closePanel = () => {
+    setPanelOpen(false);
+    requestAnimationFrame(() => {
+      document.querySelector<HTMLButtonElement>(`[data-tool="${activeTool}"]`)?.focus();
+    });
+  };
   return (
-    <aside className={`tool-panel ${panelOpen ? "open" : ""}`} aria-label={`${activeTool} controls`}>
-      <button className="panel-close" type="button" onClick={() => setPanelOpen(false)} aria-label="Close panel"><X size={18} /></button>
+    <aside
+      className={`tool-panel ${panelOpen ? "open" : ""}`}
+      aria-label={`${activeTool} controls`}
+      aria-hidden={!panelOpen}
+      inert={!panelOpen}
+    >
+      <button className="panel-close" type="button" onClick={closePanel} aria-label="Close panel"><X size={18} /></button>
       <div className="panel-scroll"><Panel /></div>
     </aside>
   );

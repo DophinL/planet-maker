@@ -17,7 +17,7 @@ The world picker deliberately stays outside the Three.js bundle. This keeps the 
 
 ## State and project files
 
-`src/store/editor-store.ts` is the only mutable project store. Its serializable contract lives in `src/types/editor.ts` and is versioned as `version: 1`.
+`src/store/editor-store.ts` is the only mutable project store. Its serializable contract lives in `src/types/editor.ts` and is versioned as `version: 1`. Imported projects pass through `src/lib/project.ts`, which rejects malformed values and rebuilds model URLs from the trusted local catalog.
 
 Persisted layers:
 
@@ -37,7 +37,7 @@ Spherical positions are stored as normalized `[x, y, z]` tuples. `src/lib/geo.ts
 
 ## Assets and offline cache
 
-All runtime assets are served from `public/assets`. `vite-plugin-pwa` generates a Workbox service worker that precaches application chunks, fonts, planet textures, previews, and the 20 GLBs. Offline use is available after the first successful production load completes the cache.
+All runtime assets are served from `public/assets`. `vite-plugin-pwa` generates a Workbox service worker that precaches the application shell, planet previews, and the Earth starter set. Other textures and models use on-demand cache-first routes, avoiding a large background download on first visit. `src/lib/offline-assets.ts` powers the explicit **Download offline library** action for users who want all nine planets and 20 GLBs available without a connection.
 
 ## Extension points
 

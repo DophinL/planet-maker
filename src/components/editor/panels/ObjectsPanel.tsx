@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Box, ExternalLink, Search, Trash2, Upload } from "lucide-react";
 import { OBJECTS } from "../../../data/objects";
 import { useEditorStore } from "../../../store/editor-store";
@@ -9,8 +9,10 @@ const TRIPO_OBJECT_URL =
 
 export function ObjectsPanel() {
   const inputRef = useRef<HTMLInputElement>(null);
+  const objectUrls = useRef(new Set<string>());
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
+  const [error, setError] = useState("");
   const [customModels, setCustomModels] = useState<Array<{ id: string; name: string; model: string; size: number; elevation: number }>>([]);
   const objects = useEditorStore((state) => state.objects);
   const selectedId = useEditorStore((state) => state.selectedId);
@@ -19,6 +21,11 @@ export function ObjectsPanel() {
   const removeSelected = useEditorStore((state) => state.removeSelected);
   const clearLayer = useEditorStore((state) => state.clearLayer);
   const selected = objects.find((object) => object.id === selectedId);
+
+  useEffect(() => () => {
+    objectUrls.current.forEach((url) => URL.revokeObjectURL(url));
+    objectUrls.current.clear();
+  }, []);
 
   const filtered = useMemo(
     () =>
@@ -31,12 +38,22 @@ export function ObjectsPanel() {
   );
 
   const upload = (file?: File) => {
-    if (!file || !file.name.toLowerCase().endsWith(".glb")) return;
-    if (file.size > 25 * 1024 * 1024) return;
+    if (!file) return;
+    setError("");
+    if (!file.name.toLowerCase().endsWith(".glb")) {
+      setError("Choose a binary .glb model file.");
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      setError("This model is larger than the 25 MB local upload limit.");
+      return;
+    }
+    const modelUrl = URL.createObjectURL(file);
+    objectUrls.current.add(modelUrl);
     const model = {
       id: crypto.randomUUID(),
       name: file.name.replace(/\.glb$/i, ""),
-      model: URL.createObjectURL(file),
+      model: modelUrl,
       size: 0.4,
       elevation: 0
     };
@@ -99,15 +116,17 @@ export function ObjectsPanel() {
       <PanelSection
         title="Local library"
         description="20 lightweight models included in this repository."
-        action={objects.length ? <button className="mini-action" type="button" onClick={() => clearLayer("objects")}>Clear {objects.length}</button> : null}
+        action={objects.length ? <button className="mini-action" type="button" onClick={() => {
+          if (window.confirm(`Remove all ${objects.length} placed objects?`)) clearLayer("objects");
+        }}>Clear {objects.length}</button> : null}
       >
         <div className="object-search">
           <Search size={16} />
           <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search models" aria-label="Search models" />
         </div>
-        <div className="category-tabs" role="tablist" aria-label="Object categories">
+        <div className="category-tabs" role="group" aria-label="Filter object categories">
           {["All", "Places", "Nature", "Travel", "Sky"].map((item) => (
-            <button key={item} type="button" className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>
+            <button key={item} type="button" className={category === item ? "active" : ""} aria-pressed={category === item} onClick={() => setCategory(item)}>{item}</button>
           ))}
         </div>
         <div className="object-grid">
@@ -124,12 +143,23 @@ export function ObjectsPanel() {
             </button>
           ))}
         </div>
+        {!filtered.length && !customModels.length ? <p className="empty-state">No local models match “{query}”. Try another search or category.</p> : null}
       </PanelSection>
 
       <button className="upload-glb" type="button" onClick={() => inputRef.current?.click()}>
         <Upload size={17} /> Upload a GLB <span>max 25 MB</span>
       </button>
-      <input ref={inputRef} className="visually-hidden" type="file" accept=".glb,model/gltf-binary" onChange={(event) => upload(event.target.files?.[0])} />
+      {error ? <p className="inline-error" role="alert">{error}</p> : null}
+      <input
+        ref={inputRef}
+        hidden
+        type="file"
+        accept=".glb,model/gltf-binary"
+        onChange={(event) => {
+          upload(event.target.files?.[0]);
+          event.currentTarget.value = "";
+        }}
+      />
     </>
   );
 }

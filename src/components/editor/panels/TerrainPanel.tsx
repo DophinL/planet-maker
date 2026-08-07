@@ -45,10 +45,13 @@ export function TerrainPanel() {
         </button>
         <input
           ref={inputRef}
-          className="visually-hidden"
+          hidden
           type="file"
           accept="image/png,image/jpeg,image/webp"
-          onChange={(event) => void upload(event.target.files?.[0])}
+          onChange={(event) => {
+            void upload(event.target.files?.[0]);
+            event.currentTarget.value = "";
+          }}
         />
         {error ? <p className="inline-error" role="alert">{error}</p> : null}
       </PanelSection>
@@ -106,8 +109,8 @@ export function TerrainPanel() {
             onChange={(event) => updateSurface({ cloudOpacity: Number(event.target.value) })}
           />
           <SwitchField
-            label="Slow rotation"
-            description="Pause it for precise placement."
+            label="Auto-rotate"
+            description="Turn it off for precise placement."
             checked={surface.autoRotate}
             onChange={(autoRotate) => updateSurface({ autoRotate })}
           />

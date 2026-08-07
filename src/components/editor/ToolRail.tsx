@@ -33,6 +33,7 @@ export function ToolRail() {
             onClick={() => setActiveTool(tool.id)}
             aria-pressed={activeTool === tool.id}
             data-tooltip={tool.label}
+            data-tool={tool.id}
           >
             <Icon size={20} strokeWidth={1.75} />
             <span>{tool.label}</span>

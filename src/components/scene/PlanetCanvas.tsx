@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, type ThreeEvent, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Stars, useGLTF, useTexture } from "@react-three/drei";
 import * as THREE from "three";
@@ -30,8 +30,8 @@ function Model({ object, selected }: { object: PlacedObject; selected: boolean }
         child.receiveShadow = true;
       }
     });
-    return { model, unitScale: object.scale / longest };
-  }, [gltf.scene, object.scale]);
+    return { model, longest };
+  }, [gltf.scene]);
   const pose = useMemo(
     () => surfacePose(object.position, object.elevation),
     [object.position, object.elevation]
@@ -47,7 +47,7 @@ function Model({ object, selected }: { object: PlacedObject; selected: boolean }
         select(object.id);
       }}
     >
-      <group rotation={[0, object.rotation, 0]} scale={prepared.unitScale}>
+      <group rotation={[0, object.rotation, 0]} scale={object.scale / prepared.longest}>
         <primitive object={prepared.model} />
       </group>
       {selected ? (
@@ -57,6 +57,59 @@ function Model({ object, selected }: { object: PlacedObject; selected: boolean }
         </mesh>
       ) : null}
     </group>
+  );
+}
+
+function CloudLayer({
+  textureUrl,
+  planetId,
+  polarScale,
+  opacity
+}: {
+  textureUrl: string;
+  planetId: string;
+  polarScale: number;
+  opacity: number;
+}) {
+  const cloudMap = useTexture(textureUrl);
+  useEffect(() => {
+    cloudMap.colorSpace = THREE.SRGBColorSpace;
+  }, [cloudMap]);
+  return (
+    <mesh scale={[1.009, polarScale * 1.009, 1.009]}>
+      <sphereGeometry args={[PLANET_RADIUS, 128, 96]} />
+      <meshStandardMaterial
+        map={planetId === "venus" ? cloudMap : undefined}
+        alphaMap={planetId === "venus" ? undefined : cloudMap}
+        color="#f5f3ec"
+        transparent
+        opacity={opacity}
+        alphaTest={planetId === "venus" ? 0 : 0.025}
+        depthWrite={false}
+        blending={THREE.NormalBlending}
+        roughness={0.9}
+      />
+    </mesh>
+  );
+}
+
+function RingLayer({ textureUrl }: { textureUrl: string }) {
+  const ringMap = useTexture(textureUrl);
+  useEffect(() => {
+    ringMap.colorSpace = THREE.SRGBColorSpace;
+  }, [ringMap]);
+  return (
+    <mesh rotation={[Math.PI / 2, 0, 0.08]}>
+      <ringGeometry args={[PLANET_RADIUS * 1.22, PLANET_RADIUS * 2.05, 192]} />
+      <meshBasicMaterial
+        map={ringMap}
+        color="#fff3d1"
+        transparent
+        opacity={0.92}
+        side={THREE.DoubleSide}
+        depthWrite={false}
+      />
+    </mesh>
   );
 }
 
@@ -135,9 +188,7 @@ function PlanetSystem() {
   const select = useEditorStore((state) => state.select);
   const planet = planetId === "custom" ? PLANET_BY_ID.earth : PLANET_BY_ID[planetId];
   const textureUrl = surface.texture || PLANET_BY_ID.earth.texture;
-  const cloudUrl = planet.cloudTexture ?? PLANET_BY_ID.earth.cloudTexture!;
-  const ringUrl = planet.ringTexture ?? PLANET_BY_ID.saturn.ringTexture!;
-  const [map, cloudMap, ringMap] = useTexture([textureUrl, cloudUrl, ringUrl]);
+  const map = useTexture(textureUrl);
   const group = useRef<THREE.Group>(null);
   const pointerDown = useRef({ x: 0, y: 0 });
 
@@ -146,9 +197,7 @@ function PlanetSystem() {
     map.wrapS = THREE.RepeatWrapping;
     map.offset.x = surface.textureOffset;
     map.needsUpdate = true;
-    cloudMap.colorSpace = THREE.SRGBColorSpace;
-    ringMap.colorSpace = THREE.SRGBColorSpace;
-  }, [map, cloudMap, ringMap, surface.textureOffset]);
+  }, [map, surface.textureOffset]);
 
   useFrame((_, delta) => {
     if (group.current && surface.autoRotate && !placement) {
@@ -216,20 +265,14 @@ function PlanetSystem() {
         </mesh>
 
         {surface.cloudOpacity > 0 ? (
-          <mesh scale={[1.009, planet.polarScale * 1.009, 1.009]}>
-            <sphereGeometry args={[PLANET_RADIUS, 128, 96]} />
-            <meshStandardMaterial
-              map={planetId === "venus" ? cloudMap : undefined}
-              alphaMap={planetId === "venus" ? undefined : cloudMap}
-              color="#f5f3ec"
-              transparent
+          <Suspense fallback={null}>
+            <CloudLayer
+              textureUrl={planet.cloudTexture ?? PLANET_BY_ID.earth.cloudTexture!}
+              planetId={planetId}
+              polarScale={planet.polarScale}
               opacity={surface.cloudOpacity}
-              alphaTest={planetId === "venus" ? 0 : 0.025}
-              depthWrite={false}
-              blending={THREE.NormalBlending}
-              roughness={0.9}
             />
-          </mesh>
+          </Suspense>
         ) : null}
 
         {surface.atmosphere > 0 ? (
@@ -247,17 +290,9 @@ function PlanetSystem() {
         ) : null}
 
         {planet.ringTexture ? (
-          <mesh rotation={[Math.PI / 2, 0, 0.08]}>
-            <ringGeometry args={[PLANET_RADIUS * 1.22, PLANET_RADIUS * 2.05, 192]} />
-            <meshBasicMaterial
-              map={ringMap}
-              color="#fff3d1"
-              transparent
-              opacity={0.92}
-              side={THREE.DoubleSide}
-              depthWrite={false}
-            />
-          </mesh>
+          <Suspense fallback={null}>
+            <RingLayer textureUrl={planet.ringTexture} />
+          </Suspense>
         ) : null}
 
         <Suspense fallback={null}>
@@ -276,18 +311,63 @@ function PlanetSystem() {
   );
 }
 
+function ResponsiveCamera() {
+  const planetId = useEditorStore((state) => state.planetId);
+  const { camera, size } = useThree();
+  useEffect(() => {
+    if (!(camera instanceof THREE.PerspectiveCamera) || !size.width || !size.height) return;
+    const aspect = size.width / size.height;
+    const verticalFov = THREE.MathUtils.degToRad(camera.fov);
+    const visualRadius = planetId === "saturn" ? PLANET_RADIUS * 2.08 : PLANET_RADIUS * 1.11;
+    const verticalDistance = visualRadius / Math.tan(verticalFov / 2);
+    const horizontalDistance = visualRadius / (Math.tan(verticalFov / 2) * aspect);
+    const distance = Math.max(8.15, verticalDistance, horizontalDistance) * 1.04;
+    camera.position.set(0, distance * 0.043, distance);
+    camera.updateProjectionMatrix();
+  }, [camera, planetId, size.height, size.width]);
+  return null;
+}
+
+function PlanetControls() {
+  const regress = useThree((state) => state.performance.regress);
+  return (
+    <OrbitControls
+      makeDefault
+      enablePan={false}
+      minDistance={5.3}
+      maxDistance={26}
+      minPolarAngle={0.2}
+      maxPolarAngle={Math.PI - 0.2}
+      rotateSpeed={0.55}
+      zoomSpeed={0.72}
+      dampingFactor={0.06}
+      onStart={regress}
+    />
+  );
+}
+
 export function PlanetCanvas() {
   const background = useEditorStore((state) => state.lighting.background);
+  const autoRotate = useEditorStore((state) => state.surface.autoRotate);
+  const [pageVisible, setPageVisible] = useState(() => document.visibilityState !== "hidden");
   const colors = {
     observatory: "#0b1113",
     "deep-space": "#05080c",
     "warm-dusk": "#17100e"
   };
 
+  useEffect(() => {
+    const handleVisibility = () => setPageVisible(document.visibilityState !== "hidden");
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => document.removeEventListener("visibilitychange", handleVisibility);
+  }, []);
+
   return (
     <Canvas
       className="planet-canvas"
       dpr={[1, 2]}
+      frameloop={pageVisible ? (autoRotate ? "always" : "demand") : "never"}
+      performance={{ min: 0.68, debounce: 240 }}
       shadows="basic"
       fallback={
         <div className="webgl-fallback" role="alert">
@@ -309,17 +389,8 @@ export function PlanetCanvas() {
       <Suspense fallback={null}>
         <PlanetSystem />
       </Suspense>
-      <OrbitControls
-        makeDefault
-        enablePan={false}
-        minDistance={5.3}
-        maxDistance={12}
-        minPolarAngle={0.2}
-        maxPolarAngle={Math.PI - 0.2}
-        rotateSpeed={0.55}
-        zoomSpeed={0.72}
-        dampingFactor={0.06}
-      />
+      <ResponsiveCamera />
+      <PlanetControls />
       <ExportBridge />
     </Canvas>
   );

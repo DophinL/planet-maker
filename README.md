@@ -19,7 +19,7 @@ An offline-first 3D planet editor for the browser. Pick a world, reshape its sur
 - Add geographic markers and billboard text directly on the sphere.
 - Control sun direction, intensity, ambient light, and the scene backdrop.
 - Export a PNG snapshot, portable GLB scene, or editable `.planet.json` project.
-- Install it as a PWA and keep working after the initial asset cache is complete.
+- Install it as a PWA, then optionally download the complete planet and model library for offline work.
 
 All editing data stays in the browser. The application contains no API routes, analytics, authentication, database client, or server-side rendering.
 
@@ -71,7 +71,7 @@ src/
 └── styles/              # responsive product UI
 ```
 
-The picker is a separate lazy-loaded boundary from the 3D editor, so Three.js is only downloaded after a world is selected. Static textures, previews, and models live under `public/assets/`; Vite PWA precaches them for offline use. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the runtime and data boundaries.
+The picker is a separate lazy-loaded boundary from the 3D editor, so Three.js is only downloaded after a world is selected. Static textures, previews, and models live under `public/assets/`; the PWA precaches the application shell and common starter assets, then caches other assets as they are used. The Export panel can download the complete library on demand. See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the runtime and data boundaries.
 
 ## Privacy and offline behavior
 
@@ -79,7 +79,7 @@ The picker is a separate lazy-loaded boundary from the 3D editor, so Three.js is
 - Uploaded GLBs use an in-memory object URL and are intentionally not embedded in project JSON.
 - Projects persist in `localStorage`; clearing site data clears the saved project.
 - The Tripo and Make3DMap cards are ordinary outbound links. Nothing is sent until you choose to follow one.
-- The PWA becomes fully offline-capable after the browser successfully caches the first production visit. A source checkout can always be run without internet after dependencies are installed.
+- The installed PWA keeps the app shell and common starter assets ready. Use **Export → Download offline library** once to cache all nine planets and 20 built-in objects. A source checkout can always be run without internet after dependencies are installed.
 
 ## Built-in assets and attribution
 

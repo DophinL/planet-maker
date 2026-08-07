@@ -1,9 +1,10 @@
 import { useRef, useState } from "react";
-import { Box, Check, FileJson, Image, Upload } from "lucide-react";
+import { Box, Check, Download, FileJson, Image, Upload } from "lucide-react";
 import { captureScenePng, exportSceneGlb } from "../../../lib/scene-export";
 import { downloadBlob, downloadText, safeFileName } from "../../../lib/download";
+import { downloadOfflineLibrary } from "../../../lib/offline-assets";
+import { parsePlanetProject } from "../../../lib/project";
 import { useEditorStore } from "../../../store/editor-store";
-import type { SerializableProject } from "../../../types/editor";
 import { PanelSection } from "../../shared/Controls";
 
 export function ExportPanel() {
@@ -14,6 +15,7 @@ export function ExportPanel() {
   const [busy, setBusy] = useState("");
   const [done, setDone] = useState("");
   const [error, setError] = useState("");
+  const [offlineProgress, setOfflineProgress] = useState<{ completed: number; total: number } | null>(null);
   const name = safeFileName(surface.textureName);
 
   const run = async (kind: "png" | "glb" | "json") => {
@@ -34,13 +36,26 @@ export function ExportPanel() {
 
   const loadProject = async (file?: File) => {
     if (!file) return;
+    setError("");
     try {
-      const data = JSON.parse(await file.text()) as SerializableProject;
-      if (data.version !== 1 || !data.surface || !data.lighting) throw new Error("Unsupported project file.");
-      importProject(data);
+      if (file.size > 6 * 1024 * 1024) throw new Error("This project is larger than the 6 MB import limit.");
+      importProject(parsePlanetProject(JSON.parse(await file.text())));
       setDone("import");
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Could not import this project.");
+    }
+  };
+
+  const downloadOffline = async () => {
+    setError("");
+    setOfflineProgress({ completed: 0, total: 1 });
+    try {
+      await downloadOfflineLibrary((completed, total) => setOfflineProgress({ completed, total }));
+      setDone("offline");
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : "Could not download the offline library.");
+    } finally {
+      setOfflineProgress(null);
     }
   };
 
@@ -70,18 +85,34 @@ export function ExportPanel() {
             );
           })}
         </div>
-        {error ? <p className="inline-error" role="alert">{error}</p> : null}
       </PanelSection>
       <PanelSection title="Continue later" description="Import a project file created by Planet Maker.">
         <button className="upload-glb" type="button" onClick={() => inputRef.current?.click()}>
           <Upload size={17} /> Import project <span>{done === "import" ? "Loaded" : ".planet.json"}</span>
         </button>
-        <input ref={inputRef} className="visually-hidden" type="file" accept=".json,.planet.json,application/json" onChange={(event) => void loadProject(event.target.files?.[0])} />
+        <input
+          ref={inputRef}
+          hidden
+          type="file"
+          accept=".json,.planet.json,application/json"
+          onChange={(event) => {
+            void loadProject(event.target.files?.[0]);
+            event.currentTarget.value = "";
+          }}
+        />
       </PanelSection>
       <div className="export-note">
         <strong>Offline by design</strong>
-        <p>Built-in assets are bundled locally. Custom GLBs are session-only and are not embedded in project JSON.</p>
+        <p>Cache every built-in planet and model now, then keep creating without a connection.</p>
+        <button type="button" className="offline-download" onClick={() => void downloadOffline()} disabled={Boolean(offlineProgress)}>
+          {done === "offline" ? <Check size={16} /> : <Download size={16} />}
+          {offlineProgress
+            ? `Downloading ${offlineProgress.completed} / ${offlineProgress.total}`
+            : done === "offline" ? "Offline library ready" : "Download offline library"}
+        </button>
+        <small>Custom GLBs remain session-only and are not embedded in project JSON.</small>
       </div>
+      {error ? <p className="inline-error" role="alert">{error}</p> : null}
     </>
   );
 }

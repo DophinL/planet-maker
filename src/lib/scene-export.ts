@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
 
 let renderer: THREE.WebGLRenderer | null = null;
 let scene: THREE.Scene | null = null;
@@ -27,6 +26,7 @@ export async function captureScenePng(): Promise<Blob> {
 
 export async function exportSceneGlb(): Promise<Blob> {
   if (!scene) throw new Error("The scene is not ready yet.");
+  const { GLTFExporter } = await import("three/examples/jsm/exporters/GLTFExporter.js");
   const exporter = new GLTFExporter();
   const result = await exporter.parseAsync(scene, {
     binary: true,

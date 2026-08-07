@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { createJSONStorage, persist, type StateStorage } from "zustand/middleware";
 import { PLANET_BY_ID } from "../data/planets";
 import type {
   LightingSettings,
@@ -15,6 +15,37 @@ import type {
 } from "../types/editor";
 
 const uid = () => crypto.randomUUID();
+let storageAvailable = true;
+
+export const getStorageStatus = () => storageAvailable;
+
+const browserStorage: StateStorage = {
+  getItem: (name) => {
+    try {
+      return localStorage.getItem(name);
+    } catch {
+      storageAvailable = false;
+      return null;
+    }
+  },
+  setItem: (name, value) => {
+    try {
+      localStorage.setItem(name, value);
+      storageAvailable = true;
+      window.dispatchEvent(new CustomEvent("planet-maker-storage", { detail: "saved" }));
+    } catch {
+      storageAvailable = false;
+      window.dispatchEvent(new CustomEvent("planet-maker-storage", { detail: "error" }));
+    }
+  },
+  removeItem: (name) => {
+    try {
+      localStorage.removeItem(name);
+    } catch {
+      storageAvailable = false;
+    }
+  }
+};
 
 const defaultLighting: LightingSettings = {
   azimuth: 38,
@@ -73,6 +104,7 @@ interface EditorState {
   select: (id: string | null) => void;
   updateSelectedObject: (patch: Partial<Pick<PlacedObject, "scale" | "rotation" | "elevation">>) => void;
   removeSelected: () => void;
+  removeItem: (id: string) => void;
   clearLayer: (layer: "objects" | "markers" | "texts") => void;
   importProject: (project: SerializableProject) => void;
   serialize: () => SerializableProject;
@@ -152,6 +184,13 @@ export const useEditorStore = create<EditorState>()(
           texts: state.texts.filter((item) => item.id !== state.selectedId),
           selectedId: null
         })),
+      removeItem: (id) =>
+        set((state) => ({
+          objects: state.objects.filter((item) => item.id !== id),
+          markers: state.markers.filter((item) => item.id !== id),
+          texts: state.texts.filter((item) => item.id !== id),
+          selectedId: state.selectedId === id ? null : state.selectedId
+        })),
       clearLayer: (layer) => set({ [layer]: [], selectedId: null } as Partial<EditorState>),
       importProject: (project) =>
         set({
@@ -179,6 +218,7 @@ export const useEditorStore = create<EditorState>()(
     }),
     {
       name: "planet-maker-project-v1",
+      storage: createJSONStorage(() => browserStorage),
       partialize: (state) => ({
         planetId: state.planetId,
         surface: state.surface.texture.startsWith("data:") && state.surface.texture.length > 3_500_000

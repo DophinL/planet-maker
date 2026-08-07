@@ -1,16 +1,20 @@
 import { useRef, useState } from "react";
-import { ArrowRight, ImagePlus, Orbit, Upload } from "lucide-react";
+import { ArrowRight, ImagePlus, Orbit, Play, Upload } from "lucide-react";
 import { PLANETS } from "../../data/planets";
 import { normalizeTextureFile } from "../../lib/texture";
 import type { PlanetId } from "../../types/editor";
 
 export function PlanetPicker({
-  onChoose
+  onChoose,
+  onContinue,
+  savedProject
 }: {
   onChoose: (planetId: PlanetId, texture?: string, name?: string) => void;
+  onContinue?: () => void;
+  savedProject?: { name: string; planetId: PlanetId; itemCount: number };
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [hovered, setHovered] = useState<PlanetId>("earth");
+  const [hovered, setHovered] = useState<PlanetId>(savedProject?.planetId ?? "earth");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -49,6 +53,17 @@ export function PlanetPicker({
       </section>
 
       <section className="picker-content">
+        {onContinue && savedProject ? (
+          <button className="continue-project" type="button" onClick={onContinue}>
+            <span><Play size={17} fill="currentColor" /></span>
+            <span>
+              <small>Continue local project</small>
+              <strong>{savedProject.name}</strong>
+            </span>
+            <em>{savedProject.itemCount} placed {savedProject.itemCount === 1 ? "item" : "items"}</em>
+            <ArrowRight size={17} aria-hidden="true" />
+          </button>
+        ) : null}
         <div className="picker-title">
           <span>01 — Choose a world</span>
           <h1>Start with a planet.</h1>
@@ -67,7 +82,7 @@ export function PlanetPicker({
               onClick={() => onChoose(planet.id)}
             >
               <span className="planet-index">{String(index + 1).padStart(2, "0")}</span>
-              <img src={planet.preview} alt="" />
+              <img src={planet.preview} alt="" loading={index < 4 ? "eager" : "lazy"} />
               <span className="planet-meta">
                 <strong>{planet.name}</strong>
                 <small>{planet.kicker}</small>
@@ -93,10 +108,13 @@ export function PlanetPicker({
         {error ? <p className="picker-error" role="alert">{error}</p> : null}
         <input
           ref={inputRef}
-          className="visually-hidden"
+          hidden
           type="file"
           accept="image/png,image/jpeg,image/webp"
-          onChange={(event) => void upload(event.target.files?.[0])}
+          onChange={(event) => {
+            void upload(event.target.files?.[0]);
+            event.currentTarget.value = "";
+          }}
         />
       </section>
 
