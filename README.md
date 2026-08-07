@@ -10,8 +10,6 @@ An offline-first 3D planet editor for the browser. Pick a world, reshape its sur
 
 ![Planet Maker world picker](docs/planet-picker.png)
 
-![Planet Maker object editor](docs/planet-editor.png)
-
 ## What you can make
 
 - Start from Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune, or the Moon.
